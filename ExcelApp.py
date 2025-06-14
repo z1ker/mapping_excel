@@ -1,8 +1,8 @@
 import sys
 from PySide6.QtWidgets import QMessageBox, QApplication, QMainWindow, QFileDialog
-from excel_ui2 import Ui_MainWindow, AnimatedButton  # Імпорт із згенерованого .py файлу
+from excel_ui3 import Ui_MainWindow, AnimatedButton  # Імпорт із згенерованого .py файлу
 import pandas as pd
-from converter_excel import GoodsProcessor
+from converter_excel import GoodsProcessor, GoodsProcessor_miners
 from PySide6.QtGui import QIcon
 class ExcelApp(QMainWindow):
     def __init__(self):
@@ -104,41 +104,15 @@ class ExcelApp(QMainWindow):
         self.ui.pushButtonBrowse_2.deleteLater()
         self.ui.pushButtonBrowse_2 = self.animated_browse2_btn
 
-        # Заміна першої кнопки Browse
-        self.animated_browse3_btn = AnimatedButton("Browse")
-        self.animated_browse3_btn.setObjectName("pushButtonBrowse3")
-        self.animated_browse3_btn.setStyleSheet("""
-                            QPushButton {
-                                background-color: #3b3b6d; /* Темно-фіолетовий */
-                                color: white;             /* Білий текст */
-                                border: none;
-                                border-radius: 10px;      /* Заокруглені краї */
-                                padding: 4px 10px;
 
-                            }
-                            QPushButton:hover {
-                                background-color: #4b4b7f; /* Трохи світліший при наведенні */
-                            }
-                            QPushButton:pressed {
-                                background-color: #2b2b5d; /* Трохи темніший при натисканні */
-                            }
-                        """)
-        layout2 = self.ui.pushButtonBrowse_3.parentWidget().layout()
-        if layout2:
-            self.ui.horizontalLayout_5.removeWidget(self.ui.pushButtonBrowse_3)
-            self.ui.horizontalLayout_5.addWidget(self.animated_browse3_btn)
-            #layout2.addWidget(self.animated_browse3_btn)
-        self.animated_browse3_btn.clicked.connect(self.open_file_without)
-        self.ui.pushButtonBrowse_3.deleteLater()
-        self.ui.pushButtonBrowse_3 = self.animated_browse_btn
-        #self.animated_browse3_btn.setVisible(False)
-        self.ui.radioButton.toggled.connect(self.show_button)
     def show_button(self, checked):
         # checked == True, если RadioButton отмечен
         if checked:
             self.animated_browse3_btn.setVisible(True)
+            self.ui.label_4.setVisible(True)
         else:
             self.animated_browse3_btn.setVisible(False)
+            self.ui.label_4.setVisible(False)
     def convert_excel(self):
         if not self.export_path or not self.import_path:
             print("⚠️ Будь ласка, оберіть обидва файли.")
@@ -147,13 +121,25 @@ class ExcelApp(QMainWindow):
         output_file_path = f"goods_{self.selected_sheet_name.split('|')[-1]}.xlsx"
 
         try:
-            processor = GoodsProcessor(
-                export_path=self.export_path,
-                template_path=self.import_path,
-                output_path=output_file_path,
-                template_sheet_name=self.selected_sheet_name
-            )
-            processor.run()
+            if self.ui.crm_radiobutton_1.isChecked():
+                processor = GoodsProcessor(
+                    export_path=self.export_path,
+                    template_path=self.import_path,
+                    output_path=output_file_path,
+                    template_sheet_name=self.selected_sheet_name
+                )
+                processor.run()
+            elif self.ui.crm_radiobutton_2.isChecked():
+                processor = GoodsProcessor(
+                    export_path=self.export_path,
+                    template_path=self.import_path,
+                    output_path=output_file_path,
+                    template_sheet_name=self.selected_sheet_name
+                )
+                processor.load_data()
+                processor.process_data_characreristics()
+                processor.save_data()
+
             QMessageBox.information(self, "Успіх", f"Конвертація завершена. Збережено у {output_file_path}")
             print(f"Конвертація завершена. Збережено у {output_file_path}")
         except Exception as e:
